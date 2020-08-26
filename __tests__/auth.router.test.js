@@ -1,46 +1,47 @@
 'use strict';
 
-const secret = process.env.SECRET;
+require('dotenv').config();
 
 const jwt = require('jsonwebtoken');
 
-const server = require('../src/server.js').server;
+const { server } = require('../src/server.js');
 const supergoose = require('@code-fellows/supergoose');
 
 const mockRequest = supergoose(server);
 
+let users = {
+  admin: { username: 'admin', password: 'password', role: 'admin' },
+  editor: { username: 'editor', password: 'password', role: 'editor' },
+  user: { username: 'user', password: 'password', role: 'user' },
+};
 
 describe('Auth Router', () => {
 
-  describe(`users signup/in`, () => {
+  Object.keys(users).forEach(userType => {
 
-    it('can sign up', async () => {
+    describe(`${userType} users`, () => {
 
-      const userData = { username: 'admin', password: 'password', role: 'admin', email: 'admin@admin.com' };
+      let id;
 
-      const results = await mockRequest.post('/signup').send(userData);
+      it('can create one', async () => {
 
-      const token = jwt.verify(results.text, secret);
+        const results = await mockRequest.post('/signup').send(users[userType]);
+        expect(results.body.user).toBeDefined();
+        expect(results.body.token).toBeDefined();
+        const token = jwt.verify(results.body.token, process.env.SECRET);
+        expect(token.role).toBe(userType);
 
-      expect(token.id).toBeDefined();
+      });
+      it('can signin with basic', async () => {
 
+        const { username } = users[userType];
+        const { password } = users[userType];
+        const results = await mockRequest
+          .post('/signin').auth(username, password);
+        const token = jwt.verify(results.body.token, process.env.SECRET);
+        expect(token.role).toBe(userType);
+        
+      });
     });
-
-    it('can signin with basic', async () => {
-
-      const userData = { username: 'joey', password: 'password', role: 'admin', email: 'admin@admin.com' };
-
-      await mockRequest.post('/signup').send(userData);
-
-      const results = await mockRequest.post('/signin').auth('joey', 'password');
-
-      const token = jwt.verify(results.text, secret);
-
-      expect(token).toBeDefined();
-
-    });
-
   });
-
-
 });

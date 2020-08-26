@@ -2,27 +2,38 @@
 
 const base64 = require('base-64');
 
-const users = require('../models/users-model.js');
+const User = require('../models/users-model.js');
 
 module.exports = (req, res, next) => {
-
+  const errorObj = {'message': 'Invalid User ID/Password', 'status': 401, 'statusMessage': 'Unauthorized'};
   // req.headers.authorization should be : "Basic encodedusername:sdkjdsljd="
 
-  if (!req.headers.authorization) { next('Invalid Login'); return; }
+  if (!req.headers.authorization) { next(errorObj); return; }
 
-  // Pull out just the encoded part by splitting the header into an array on the space and popping off the 2nd element
-  let basic = req.headers.authorization.split(' ').pop();
+  // Remove 'Basic ' by splitting on the space
+  let encodedPair = req.headers.authorization.split(' ').pop();
 
-  // decodes to user:pass and splits it to an array
-  let [user, pass] = base64.decode(basic).split(':');
+  // Decode to user:pass and splits it to an array
+  let [user, pass] = base64.decode(encodedPair).split(':');
 
   // Is this user ok?
-  users.authenticateBasic(user, pass)
+  return User.authenticateBasic(user, pass)
     .then(validUser => {
-      req.token = users.generateToken(validUser);
+      req.token = validUser.generateToken(validUser);
+      req.user = user;
       next();
     })
-    .catch(err => next('Invalid Login'));
+    .catch(err => next(errorObj));
+
+  // Async Version for Reference -> Requires 'async' function declaration
+  // try{
+  //   const validUser = await User.authenticateBasic(user, pass);
+  //   req.token = validUser.generateToken();
+  //   next();
+
+  // } catch(err) {
+  //   next(errorObj);
+  // }
 
 };
 

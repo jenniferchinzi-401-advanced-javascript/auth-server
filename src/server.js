@@ -18,6 +18,7 @@ const router = require('./auth/router.js');
 // =============================================================================
 // Global Middleware
 
+app.use(express.static('./public'));
 app.use(express.json());
 
 // =============================================================================
