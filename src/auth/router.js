@@ -4,7 +4,6 @@ const express = require('express');
 const router = express.Router();
 
 const bcrypt = require('bcrypt');
-const base64 = require('base-64');
 const jwt = require('jsonwebtoken');
 
 
@@ -12,7 +11,7 @@ const jwt = require('jsonwebtoken');
 const basicAuth = require('./middleware/basic.js');
 const oauth = require('./middleware/oauth.js');
 
-let users = require('../users.js');
+let User = require('../auth/models/users-model.js');
 let secret = process.env.SECRET;
 
 
@@ -24,32 +23,23 @@ router.get('oauth', oauth, (req, res) => {
 
 // Create a POST route for /signup
 //    Accepts either a JSON object or FORM Data with the keys “username” and “password”
-router.post('signup', async (req, res, next) => {
-  let user = req.body;
-  //    Creates a new user record in a Mongo database
-  if(!users[user.username]){
+router.post('/signup', async (req, res, next) => {
 
-    // hash password and save it to the user
-    user.password = await bcrypt.hash(req.body.password, 10)
-    
-    // create a new user
-    user[user.username] = user;
+  const user = await User.create(req.body);
+  const token = user.generateToken();
 
-    // create a signed "token"
-    let token = await jwt.sign({ username: user.username }, secret)
+  const responseBody = {
+    token, 
+    user,
+  };
 
-    // send the "token"
-    res.status(200).send(token);
-  }
-  else {
-    res.status(403).send('Username is Unavailable');
-  }
+  res.send(responseBody);
 
 });
 
 // Create a POST route for /signin
 //    router.post('/signin', basicAuth, (req,res) => {});
-router.post('signin', basicAuth, (req, res, next) => {
+router.post('/signin', basicAuth, (req, res, next) => {
 
 
   // Additionally, set a Cookie and a Token header on the response, with the token as the value
@@ -67,8 +57,9 @@ router.post('signin', basicAuth, (req, res, next) => {
 
 // Create a GET route for /users that returns a JSON object with all users
 
-router.get('users', (req, res) => {
-  res.status(200).json(users);
+router.get('/users', (req, res) => {
+  // res.status(200).json(User);
+  res.status(200).send(req.token);
 });
 
 // Stretch Goal: have this route also use the middleware for authentication so that you cannot see the user list without a valid username and password
