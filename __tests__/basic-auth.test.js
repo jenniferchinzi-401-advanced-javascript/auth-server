@@ -12,7 +12,7 @@ beforeAll(async (done) => {
 
 describe('Auth Middleware', () => {
 
-  let errorObject = {'message': 'Invalid User ID/Password', 'status': 401, 'statusMessage': 'Unauthorized'};
+  let errorObject = {'message': 'Invalid Authorization Headers', 'status': 401, 'statusMessage': 'Unauthorized'};
 
   describe('user authentication', () => {
 

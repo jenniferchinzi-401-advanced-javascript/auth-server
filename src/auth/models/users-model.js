@@ -29,8 +29,8 @@ users.pre('save', async function() {
 users.statics.authenticateBasic = function (username, password){
   let query = { username };
   return this.findOne(query)
-    .then(user => user && user.comparePassword(password) )
-    .catch(console.error);
+    .then(user => user && user.comparePassword(password) );
+  // .catch(console.error);
 };
 
 

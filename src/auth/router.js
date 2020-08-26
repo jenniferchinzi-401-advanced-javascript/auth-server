@@ -4,15 +4,22 @@ const express = require('express');
 const router = express.Router();
 
 const bcrypt = require('bcrypt');
-const base4 = require('base-64');
+const base64 = require('base-64');
 const jwt = require('jsonwebtoken');
 
 
 //    Uses middleware (BasicAuthentication) to validate the user
 const basicAuth = require('./middleware/basic.js');
+const oauth = require('./middleware/oauth.js');
 
 let users = require('../users.js');
 let secret = process.env.SECRET;
+
+
+// Add a new /oauth route to the auth router
+router.get('oauth', oauth, (req, res) => {
+  res.status(200).send(req.token);
+});
 
 
 // Create a POST route for /signup
