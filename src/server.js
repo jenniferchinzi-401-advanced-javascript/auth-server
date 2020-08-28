@@ -14,6 +14,7 @@ const serverError = require('./middleware/500.js');
 // Import Routes
 
 const router = require('./auth/router.js');
+const testRouter = require('./auth/extra-routes.js');
 
 // =============================================================================
 // Global Middleware
@@ -24,7 +25,8 @@ app.use(express.json());
 // =============================================================================
 // Custom Routes
 
-app.use('/', router);
+app.use(testRouter);
+app.use(router);
 
 // =============================================================================
 //JS Error Test Route

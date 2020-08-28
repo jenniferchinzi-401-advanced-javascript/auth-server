@@ -19,7 +19,7 @@ module.exports = (req, res, next) => {
   // Is this user ok?
   return User.authenticateBasic(user, pass)
     .then(validUser => {
-      req.token = validUser.generateToken(validUser);
+      req.token = validUser.generateToken();
       req.user = user;
       next();
     })

@@ -4,6 +4,8 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
+const SECRET = process.env.SECRET;
+
 const users = new mongoose.Schema({
   username: { type: String, required: true },
   password: { type: String, required: true },
@@ -12,6 +14,7 @@ const users = new mongoose.Schema({
   role: { type: String, required: true, default: 'user', enum: ['admin', 'editor', 'writer', 'user'] },
 });
 
+// =============================================================================
 //Modify user instance BEFORE saving => this.password is now encrypted
 users.pre('save', async function() {
   if (this.isModified('password')){
@@ -19,12 +22,12 @@ users.pre('save', async function() {
   }
 });
 
+// =============================================================================
 // Create a method in the schema to authenticate a user using the hashed password
 users.statics.authenticateBasic = function (username, password){
   let query = { username };
   return this.findOne(query)
     .then(user => user && user.comparePassword(password) );
-  // .catch(console.error);
 };
 
 // method used as part of authenticateBasic
@@ -33,34 +36,49 @@ users.methods.comparePassword = function(plainPassword){
     .then(valid => valid ? this : null);
 };
 
-// Create a method in the schema to generate a Token following a valid login
-users.methods.generateToken = function(){
+// =============================================================================
+// Use Oauth to return existing user OR create new user
+users.statics.createFromOauth = function(username){
+
+  // Error for missing username
+  if(!username){
+    return Promise.reject('Validation Error');
+  }
+  let query = { username };
+  return this.findOne(query)
+    .then(user => {
+      if(!user) { throw new Error('User Not Found');}
+      console.log('Welcome Back', user.username);
+      return user;
+    })
+    .catch(error => {
+      console.log('Creating New User');
+      let password = 'notapermapassword';
+      return this.create({ username, password });
+    });
+
+};
+
+// =============================================================================
+users.methods.generateToken = function () {
 
   let tokenData = {
     id: this._id,
     role: this.role,
   };
-
   const signed = jwt.sign(tokenData, process.env.SECRET);
   return signed;
-
 };
 
-// Use Oauth to return existing user OR create new user
-users.statics.createFromOauth = async function(email){
+// =============================================================================
+users.statics.authenticateToken = function (token) {
 
-  // Async Error for missing email
-  if(!email){
-    return Promise.reject('Validation Error');
-  }
-
-  let query = { email };
-  const user = await this.findOne(query);
-
-  if (user){
-    return user;
-  } else {
-    return this.create ({ username: email, password: 'none', email: email });
+  try {
+    let parsedToken = jwt.verify(token, SECRET);
+    console.log('Parsed Token: ', parsedToken);
+    return this.findById(parsedToken);
+  } catch (error) {
+    return Promise.reject;
   }
 
 };
