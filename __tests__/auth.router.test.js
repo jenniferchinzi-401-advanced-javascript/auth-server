@@ -21,7 +21,6 @@ describe('Auth Router', () => {
 
     describe(`${userType} users`, () => {
 
-      let id;
 
       it('can create one', async () => {
 
