@@ -3,9 +3,6 @@
 const express = require('express');
 const router = express.Router();
 
-// const bcrypt = require('bcrypt');
-// const jwt = require('jsonwebtoken');
-
 // =============================================================================
 //    Uses middleware (BasicAuthentication) to validate the user
 const basicAuth = require('./middleware/basic.js');
