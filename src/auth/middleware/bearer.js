@@ -9,11 +9,33 @@ module.exports = async (req, res, next) => {
 
   // Pull out encoded section of the authorization value
   let token = req.headers.authorization.split(' ').pop();
-  User.authenticateToken(token)
-    .then (validUser => {
-      req.user = validUser;
-      next();
-    })//catch errors from the user model
-    .catch(err => next('Invalid Login'));
 
+  try {
+    const validUser = await User.authenticateToken(token);
+
+    req.user = validUser;
+
+    req.user = {
+      username: validUser.username,
+      fullname: validUser.fullname,
+      email: validUser.email,
+      capabilities: validUser.capabilities,
+    };
+
+    next();
+
+  } catch (error) {
+
+    next('Invalid Login');
+
+  }
+  
 };
+  
+// Promise Version
+// User.authenticateToken(token)
+//   .then (validUser => {
+//     req.user = validUser;
+//     next();
+//   })//catch errors from the user model
+//   .catch(err => next('Invalid Login'));
